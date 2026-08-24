@@ -1,3 +1,6 @@
 /cursor-usage-widget
 *.exe
 dist/
+.cursor/
+*.log
+state.json
