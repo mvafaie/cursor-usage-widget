@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=cursor remaining
+Comment=Floating overlay of remaining Cursor plan usage
+Exec=cursor-usage-widget
+Icon=cursor-remaining
+Terminal=false
+Categories=Utility;
+StartupWMClass=cursor-remaining
+StartupNotify=false
