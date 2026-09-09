@@ -49,6 +49,7 @@ type Client struct {
 	access   string
 	refresh  string
 	planHint string
+	viaProxy bool
 }
 
 func NewClient() *Client {
@@ -83,7 +84,13 @@ func detectClientVersion() string {
 
 func (c *Client) Fetch(ctx context.Context) Snapshot {
 	if err := c.ensureToken(ctx); err != nil {
-		return Snapshot{Err: err.Error(), FetchedAt: time.Now()}
+		// Refresh itself can 403 on a blocked direct path; flip to proxy once if configured.
+		if isForbidden(err) && c.tryEnableProxy() {
+			err = c.ensureToken(ctx)
+		}
+		if err != nil {
+			return Snapshot{Err: err.Error(), FetchedAt: time.Now()}
+		}
 	}
 
 	snap, err := c.fetchOnce(ctx)
@@ -91,6 +98,12 @@ func (c *Client) Fetch(ctx context.Context) Snapshot {
 		if rerr := c.refreshAccess(ctx); rerr == nil {
 			snap, err = c.fetchOnce(ctx)
 		}
+	}
+	// 403 is often Cloudflare/geo on a direct path, not an expired token.
+	// If Cursor has http.proxy set, switch the client and retry for the rest of the process.
+	if err != nil && isForbidden(err) && c.tryEnableProxy() {
+		_ = c.refreshAccess(ctx)
+		snap, err = c.fetchOnce(ctx)
 	}
 	if err != nil {
 		return Snapshot{Err: err.Error(), FetchedAt: time.Now()}
@@ -102,6 +115,31 @@ func (c *Client) Fetch(ctx context.Context) Snapshot {
 func isAuthStatus(err error) bool {
 	msg := err.Error()
 	return strings.Contains(msg, "401") || strings.Contains(msg, "403")
+}
+
+func isForbidden(err error) bool {
+	return strings.Contains(err.Error(), "403")
+}
+
+// tryEnableProxy flips the HTTP client onto Cursor's http.proxy once.
+// Returns true only when the client was switched (caller should retry).
+func (c *Client) tryEnableProxy() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.viaProxy {
+		return false
+	}
+	raw := readCursorHTTPProxy()
+	if raw == "" {
+		return false
+	}
+	cli, err := httpClientWithProxy(raw)
+	if err != nil {
+		return false
+	}
+	c.http = cli
+	c.viaProxy = true
+	return true
 }
 
 func (c *Client) ensureToken(ctx context.Context) error {

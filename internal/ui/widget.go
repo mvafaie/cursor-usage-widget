@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	winW = 270
+	winW = 205
 	winH = 170
 	pad  = 3
 
@@ -236,19 +236,11 @@ func drawHeader(dst *ebiten.Image, icon *ebiten.Image, f *faces) {
 }
 
 func drawRemaining(dst *ebiten.Image, f *faces, snap cursor.Snapshot) {
-	amt := formatMoney(snap.RemainingUSD)
-	drawText(dst, amt, f.remain, contentX, remainY, usageColor(snap.IncludedPct))
-	aw, _ := text.Measure(amt, f.remain, 0)
-
 	reset := formatResets(snap.CycleEnd)
 	if reset == "" {
 		return
 	}
-	rw, _ := text.Measure(reset, f.meta, 0)
-	rx := float64(gripX-8) - rw
-	if rx < contentX+aw+10 {
-		return
-	}
+	rx := float64(10)	
 	drawText(dst, reset, f.meta, rx, remainY+4, rgba(230, 235, 245, 150))
 }
 
@@ -265,17 +257,17 @@ func formatResets(end time.Time) string {
 	}
 	d := time.Until(end)
 	if d <= 0 {
-		return "resets soon"
+		return "Resets soon"
 	}
 	hours := d.Hours()
 	if hours < 24 {
 		h := int(math.Ceil(hours))
 		if h < 1 {
-			return "resets soon"
+			return "Resets soon"
 		}
-		return fmt.Sprintf("resets in %dh", h)
+		return fmt.Sprintf("Resets in %dh", h)
 	}
-	return fmt.Sprintf("resets in %dd", int(hours/24))
+	return fmt.Sprintf("Resets in %dd", int(hours/24))
 }
 
 func drawClose(dst *ebiten.Image, hover bool) {

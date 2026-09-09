@@ -27,11 +27,11 @@ func loadFaces() (*faces, error) {
 		return nil, err
 	}
 	return &faces{
-		label:  &text.GoTextFace{Source: regular, Size: 14},
-		pct:    &text.GoTextFace{Source: bold, Size: 23},
-		remain: &text.GoTextFace{Source: bold, Size: 19},
-		meta:   &text.GoTextFace{Source: regular, Size: 14},
-		err:    &text.GoTextFace{Source: regular, Size: 16},
+		label:  &text.GoTextFace{Source: regular, Size: 12},
+		pct:    &text.GoTextFace{Source: bold, Size: 20},
+		remain: &text.GoTextFace{Source: bold, Size: 10},
+		meta:   &text.GoTextFace{Source: regular, Size: 12},
+		err:    &text.GoTextFace{Source: regular, Size: 14},
 	}, nil
 }
 
